@@ -1,9 +1,33 @@
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+const string corsPolicyName = "AllowAll";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicyName,
+        b => b
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+    );
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<RouteOptions>(options =>
+    {
+        options.LowercaseUrls = true;
+        options.LowercaseQueryStrings = true;
+    }
+);
+
+builder.Host.UseSerilog(
+    (context, configuration) => configuration.ReadFrom.Configuration(context.Configuration)
+);
 
 var app = builder.Build();
 
@@ -35,6 +59,8 @@ app.MapGet("/weatherforecast", () =>
     })
     .WithName("GetWeatherForecast")
     .WithOpenApi();
+
+app.UseCors(corsPolicyName);
 
 app.Run();
 
